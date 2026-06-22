@@ -31,6 +31,22 @@ Plantilla de presentación (`.pptx`, 16:9) construida con el **design system de 
 
 > Fuente de verdad de los tokens: repo [`perpetual-design-system-general`](https://github.com/hector-perpetual/perpetual-design-system-general).
 
+## Logos
+
+Dos variantes oficiales. Se elige por **contraste del fondo**, no por preferencia.
+
+**Color** (`perpetual-color.svg`) — fondos claros. Wordmark azul `#0032cb` + ícono naranja/amarillo.
+
+![Logo Perpetual color sobre fondo claro](assets/logo/perpetual-color-preview.png)
+
+**Dark** (`perpetual-dark.svg`) — fondos oscuros (`#0b1220`, portadas dark, fotos). Wordmark blanco, el ícono naranja/amarillo se mantiene.
+
+![Logo Perpetual dark sobre fondo oscuro](assets/logo/perpetual-dark-preview.png)
+
+> La versión dark es blanca, así que sobre fondo blanco se ve invisible: es lo esperado, no un error. Por eso arriba se muestra sobre su fondo oscuro. Los archivos `.png`/`.svg` originales son **transparentes** para poder colocarlos sobre cualquier fondo; las imágenes `*-preview.png` solo existen para documentación.
+>
+> Nunca recolorear, distorsionar, ni poner sombra/contorno al logo (regla dura de marca).
+
 ## Tipografía
 
 El deck referencia **Armin Grotesk** por nombre. Las 5 variantes OTF están en `assets/fonts/`. Si la fuente no está instalada en tu equipo, instálala primero (doble clic en cada `.otf`) para que el deck se vea correcto. Para un archivo 100% portable, en PowerPoint usa `Archivo › Opciones › Guardar › Incrustar fuentes en el archivo`.
