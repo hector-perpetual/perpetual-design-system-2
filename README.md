@@ -67,8 +67,15 @@ Esto reconstruye `dist/perpetual-deck-template.pptx` de forma reproducible. Los 
 ```
 perpetual-design-system-2/
 ├── build.py          # generador del deck (python-pptx)
+├── brand/            # marca completa (autosuficiente)
+│   ├── SKILL.md      # tokens + índice (fuente de verdad)
+│   └── references/   # tokens.md, components.md, voice-and-rules.md
 ├── assets/
-│   ├── logo/         # perpetual-color / perpetual-dark (SVG + PNG)
+│   ├── logo/         # perpetual-color / perpetual-dark (SVG + PNG + previews)
 │   └── fonts/        # Armin Grotesk (5 OTF)
 └── dist/             # perpetual-deck-template.pptx
 ```
+
+## Repo autosuficiente
+
+Este repo contiene **todo lo necesario** para trabajar on-brand sin pegar nada a mano: tokens y reglas (`brand/`), tipografía (`assets/fonts/`), logos (`assets/logo/`) y el template (`dist/`). Conectar solo este repositorio de GitHub basta para que una herramienta o agente jale la marca completa de forma automática.
