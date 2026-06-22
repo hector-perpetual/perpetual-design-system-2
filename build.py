@@ -18,8 +18,9 @@ from pptx.chart.data import CategoryChartData
 from pptx.oxml.ns import qn
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-LOGO_COLOR = os.path.join(HERE, "assets", "logo", "perpetual-color.png")
-LOGO_DARK = os.path.join(HERE, "assets", "logo", "perpetual-dark.png")
+LOGODIR = os.path.join(HERE, "perpetual-design-system", "assets", "logo")
+LOGO_COLOR = os.path.join(LOGODIR, "perpetual-color.png")
+LOGO_DARK = os.path.join(LOGODIR, "perpetual-dark.png")
 OUT = os.path.join(HERE, "dist", "perpetual-deck-template.pptx")
 
 # ---------------------------------------------------------------------------
