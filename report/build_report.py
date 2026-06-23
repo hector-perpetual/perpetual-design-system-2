@@ -99,79 +99,75 @@ def legend(items):
 
 
 def gen_orb():
-    """Esfera Perpetual que se disuelve en particulas/rayos desde una costura
-    vertical en su borde derecho, abanicandose a la derecha (estilo referencia).
-    Predominante azul/blanco con chispas calidas sutiles. SVG determinista."""
+    """Esfera-fondo Perpetual: gran esfera a sangre, iluminada desde la derecha
+    (lado del seam brilla, lado izquierdo cae a oscuro y se funde con el fondo).
+    Se disuelve en particulas/rayos que se abren a la derecha. SVG determinista."""
     import random, math
-    rnd = random.Random(11)
-    sx, sy, sr = 245, 280, 205            # esfera (centrada, completa)
-    fx, fy = sx + sr * 0.22, sy           # foco del abanico (dentro, lado derecho)
-    seam = sx + sr * 0.40                 # costura: aqui arranca la disolucion
+    rnd = random.Random(13)
+    VW, VH = 900, 820
+    sx, sy, sr = 300, 410, 400        # esfera grande (bleed arriba/abajo)
+    seam = sx + sr * 0.55             # costura cerca del borde derecho
+    fx, fy = sx + sr * 0.32, sy       # foco del abanico
 
     def orb_color(t):
-        if t < 0.45:
+        if t < 0.5:
             pool = ["#fff", "#fff", "#dbe7ff", "#9dbcfb", "#4f86f7", "#1a56db"]
-        elif t < 0.80:
+        elif t < 0.82:
             pool = ["#1a56db", "#3b82f6", "#fff", "#9dbcfb", "#f97316"]
         else:
             pool = ["#3b82f6", "#1a56db", "#fff", "#f97316", "#fbb900"]
         return rnd.choice(pool)
 
+    span = VW - fx
     def emit(n, kind):
         out = []
         for _ in range(n):
-            ang = rnd.gauss(0, 0.60)                   # abanico ~ +-34 grados
+            ang = rnd.gauss(0, 0.58)
             if rnd.random() < 0.10:
-                ang = rnd.gauss(0, 1.15)               # algunas mas abiertas
+                ang = rnd.gauss(0, 1.15)
             ca, sa = math.cos(ang), math.sin(ang)
-            if ca < 0.04:                              # solo hacia la derecha
+            if ca < 0.05:
                 continue
-            start = rnd.uniform(42, 100)               # arranca cerca de la costura
+            start = rnd.uniform(60, 150)
             x1, y1 = fx + ca * start, fy + sa * start
-            t = min(1.0, (x1 - fx) / 285.0)
-            col = orb_color(t)
             if kind == "ray":
-                length = rnd.uniform(14, 285) * (0.4 + 0.6 * ca)
+                length = rnd.uniform(20, 430) * (0.4 + 0.6 * ca)
                 x2, y2 = fx + ca * (start + length), fy + sa * (start + length)
-                t2 = min(1.0, (x2 - fx) / 300.0)
-                w = round(rnd.uniform(0.4, 1.8), 2)
+                t2 = min(1.0, (x2 - fx) / span)
+                w = round(rnd.uniform(0.4, 1.9), 2)
                 op = round(rnd.uniform(0.14, 0.85) * (1.0 - 0.3 * t2), 2)
                 out.append(f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" '
                            f'stroke="{orb_color(t2)}" stroke-width="{w}" opacity="{op}" stroke-linecap="round"/>')
             else:
-                rad = rnd.uniform(start, start + rnd.uniform(20, 300) * ca)
+                rad = start + rnd.uniform(20, 470) * ca
                 x, y = fx + ca * rad, fy + sa * rad
-                td = min(1.0, (x - fx) / 300.0)
-                r = round(rnd.uniform(0.4, 2.1), 2)
+                td = min(1.0, (x - fx) / span)
+                r = round(rnd.uniform(0.4, 2.2), 2)
                 op = round(rnd.uniform(0.22, 0.95) * (1.0 - 0.28 * td), 2)
                 out.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r}" fill="{orb_color(td)}" opacity="{op}"/>')
         return "".join(out)
 
-    rays, dots = emit(360, "ray"), emit(520, "dot")
-    fade = (fx - 30) / 560
-    fade2 = (seam + 25) / 560
-    return f"""<svg class="orb" viewBox="0 0 560 560" xmlns="http://www.w3.org/2000/svg">
+    rays, dots = emit(420, "ray"), emit(620, "dot")
+    fade = (seam - 120) / VW
+    fade2 = (seam + 20) / VW
+    return f"""<svg class="orb" viewBox="0 0 {VW} {VH}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
   <defs>
-    <radialGradient id="sph" cx="38%" cy="40%" r="64%">
-      <stop offset="0" stop-color="#eaf2ff"/><stop offset="16%" stop-color="#9dbcfb"/>
-      <stop offset="42%" stop-color="#1a56db"/><stop offset="74%" stop-color="#0a2c8c"/>
-      <stop offset="100%" stop-color="#06133f"/>
-    </radialGradient>
-    <radialGradient id="glow" cx="42%" cy="50%" r="60%">
-      <stop offset="0" stop-color="rgba(26,86,219,.5)"/><stop offset="100%" stop-color="rgba(26,86,219,0)"/>
+    <radialGradient id="sph" cx="66%" cy="46%" r="62%">
+      <stop offset="0" stop-color="#f2f7ff"/><stop offset="12%" stop-color="#bcd2fb"/>
+      <stop offset="30%" stop-color="#4f86f7"/><stop offset="52%" stop-color="#1a56db"/>
+      <stop offset="76%" stop-color="#0c2f8f"/><stop offset="100%" stop-color="rgba(8,16,34,0)"/>
     </radialGradient>
     <radialGradient id="seamg" cx="50%" cy="50%" r="50%">
-      <stop offset="0" stop-color="rgba(220,231,255,.95)"/><stop offset="100%" stop-color="rgba(120,170,255,0)"/>
+      <stop offset="0" stop-color="rgba(225,235,255,.9)"/><stop offset="100%" stop-color="rgba(120,170,255,0)"/>
     </radialGradient>
     <linearGradient id="diss" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0" stop-color="#fff"/><stop offset="{fade:.3f}" stop-color="#fff"/>
       <stop offset="{fade2:.3f}" stop-color="#000"/>
     </linearGradient>
-    <mask id="dmask"><rect width="560" height="560" fill="url(#diss)"/></mask>
+    <mask id="dmask"><rect width="{VW}" height="{VH}" fill="url(#diss)"/></mask>
   </defs>
-  <ellipse cx="245" cy="280" rx="320" ry="275" fill="url(#glow)"/>
   <g mask="url(#dmask)"><circle cx="{sx}" cy="{sy}" r="{sr}" fill="url(#sph)"/></g>
-  <ellipse cx="{seam:.0f}" cy="{sy}" rx="34" ry="{sr*0.95:.0f}" fill="url(#seamg)" opacity=".55"/>
+  <ellipse cx="{seam:.0f}" cy="{sy}" rx="30" ry="{sr*0.9:.0f}" fill="url(#seamg)" opacity=".5"/>
   <g>{rays}</g>
   <g>{dots}</g>
 </svg>"""
@@ -298,16 +294,15 @@ section{{padding:30px 40px}}
   border-radius:20px;padding:7px 16px}}
 
 /* hero */
-.hero{{background:var(--bg-dark);color:var(--on-dark);display:grid;grid-template-columns:1.1fr .9fr;
-  min-height:520px;position:relative;overflow:hidden}}
-.hero-l{{padding:42px 40px;display:flex;flex-direction:column;justify-content:center}}
+.hero{{background:var(--bg-dark);color:var(--on-dark);position:relative;overflow:hidden;min-height:540px}}
+.hero-l{{position:relative;z-index:1;max-width:560px;padding:50px 44px;min-height:540px;
+  display:flex;flex-direction:column;justify-content:center}}
 .hero .chip{{display:inline-flex;gap:8px;align-items:center;font-weight:800;font-size:15px;margin-bottom:26px}}
 .hero .chip b{{background:#fff;color:var(--bg-dark);padding:3px 9px;border-radius:4px}}
 .hero .chip span{{opacity:.6}}
 .hero h1{{font-size:40px;margin:6px 0 0}}
 .hero .ed{{margin-top:30px;font-weight:600;font-size:12px;letter-spacing:.14em;color:var(--dim-dark);text-transform:uppercase}}
-.hero-r{{position:relative;overflow:hidden}}
-.orb{{position:absolute;right:-55px;top:50%;transform:translateY(-50%);width:500px;height:500px}}
+.orb{{position:absolute;top:0;bottom:0;right:-40px;height:100%;width:64%;z-index:0}}
 
 /* survey band */
 .survey{{display:grid;grid-template-columns:auto auto 1fr auto;gap:26px;background:var(--surface);align-items:start}}
@@ -377,13 +372,13 @@ section{{padding:30px 40px}}
   </div>
 
   <div class="hero">
+    {ORB}
     <div class="hero-l">
       <div class="chip"><b>Perpetual X</b><span>|</span><b style="background:transparent;color:#fff;padding-left:0">Perpetual</b></div>
       <div class="label" style="color:var(--accent2)">Perpetual · IA en el trabajo</div>
       <h1>El impulso crece,<br>pero quedan brechas.</h1>
       <div class="ed">Tercera edicion · Junio 2026</div>
     </div>
-    <div class="hero-r">{ORB}</div>
   </div>
 
   <section class="survey">
