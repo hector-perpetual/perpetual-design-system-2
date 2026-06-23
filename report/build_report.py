@@ -99,65 +99,72 @@ def legend(items):
 
 
 def gen_orb():
-    """Esfera Perpetual dividida por un eje vertical:
-    - Hemisferio izquierdo: superficie solida azul, mas luminosa en el borde
-      exterior izquierdo, oscureciendo hacia el eje central.
-    - Hemisferio derecho: sin masa; cientos de lineas finas que irradian desde
-      el eje central hacia el perimetro (fibra optica), con nodos de luz.
-    La silueta sigue siendo una esfera completa (no recortada)."""
+    """Render cinematografico de una esfera dividida por un corte vertical:
+    - Hemisferio izquierdo: orbe solido, liso y luminoso, azul cobalto.
+    - Hemisferio derecho: sin masa; miles de lineas ultra finas tipo fibra
+      optica que irradian del corte central al perimetro (azul, cian y acento
+      naranja quemado), cada una con un punto de luz en la punta.
+    Silueta de esfera completa, fondo navy muy oscuro, alto contraste."""
     import random, math
-    rnd = random.Random(21)
-    VW, VH = 560, 460
-    cx, cy, r = 212, 230, 205          # circulo completo
+    rnd = random.Random(29)
+    VW, VH = 600, 500
+    cx, cy, r = 225, 250, 225          # circulo completo
 
-    def line_color(over):
-        if over and rnd.random() < 0.45:
-            return rnd.choice(["#f97316", "#fbb900", "#ffffff", "#4f86f7"])
-        return rnd.choice(["#3b82f6", "#1a56db", "#4f86f7", "#ffffff", "#9dbcfb", "#3b82f6", "#1a56db"])
+    # paleta de lineas: azul brillante + cian + acento naranja quemado
+    COOL = (["#1a56db"] * 5 + ["#3b82f6"] * 5 + ["#4f86f7"] * 3 + ["#60a5fa"] * 2 +
+            ["#22d3ee"] * 4 + ["#38bdf8"] * 4 + ["#67e8f9"] * 2 + ["#ffffff"] * 4 + ["#dbeafe"] * 2)
+    WARM = ["#ea580c", "#f97316", "#fb923c"]
 
-    lines, nodes = [], []
-    for _ in range(480):
-        ang = rnd.uniform(-1.5, 1.5)            # hemisferio derecho (cos>0)
+    lines, tips, dust = [], [], []
+    for _ in range(1300):
+        ang = rnd.uniform(-1.54, 1.54)          # hemisferio derecho (cos>0)
         ca, sa = math.cos(ang), math.sin(ang)
-        start = r * rnd.uniform(0.05, 0.17)     # pequeno nucleo de convergencia
-        over = rnd.random() < 0.15
-        end = r * (rnd.uniform(1.0, 1.3) if over else rnd.uniform(0.84, 1.0))
+        start = r * rnd.uniform(0.03, 0.13)     # nucleo de convergencia en el eje
+        over = rnd.random() < 0.13
+        end = r * (rnd.uniform(1.0, 1.16) if over else rnd.uniform(0.82, 1.0))
         x1, y1 = cx + ca * start, cy + sa * start
         x2, y2 = cx + ca * end, cy + sa * end
-        w = round(rnd.uniform(0.35, 1.45), 2)
-        op = round(rnd.uniform(0.28, 0.92), 2)
+        warm = rnd.random() < 0.12
+        col = rnd.choice(WARM) if warm else rnd.choice(COOL)
+        w = round(rnd.uniform(0.3, 0.95), 2)
+        op = round(rnd.uniform(0.3, 0.95), 2)
         lines.append(f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" '
-                     f'stroke="{line_color(over)}" stroke-width="{w}" opacity="{op}" stroke-linecap="round"/>')
-        if rnd.random() < 0.5:                  # nodo de luz sobre la linea
-            nr = rnd.uniform(start + (end - start) * 0.35, end)
-            nodes.append(f'<circle cx="{cx + ca*nr:.1f}" cy="{cy + sa*nr:.1f}" '
-                         f'r="{round(rnd.uniform(0.8, 2.1), 2)}" fill="#fff" '
-                         f'opacity="{round(rnd.uniform(0.5, 0.95), 2)}"/>')
-    for _ in range(150):                        # polvo tenue en el hemisferio derecho
-        ang = rnd.uniform(-1.5, 1.5)
+                     f'stroke="{col}" stroke-width="{w}" opacity="{op}"/>')
+        if rnd.random() < 0.6:                  # punto de luz en la PUNTA
+            tcol = "#ffffff" if rnd.random() < 0.6 else ("#67e8f9" if not warm else "#fb923c")
+            tips.append(f'<circle cx="{x2:.1f}" cy="{y2:.1f}" r="{round(rnd.uniform(0.5, 1.7), 2)}" '
+                        f'fill="{tcol}" opacity="{round(rnd.uniform(0.6, 1.0), 2)}"/>')
+    for _ in range(220):                        # polvo tenue entre las lineas
+        ang = rnd.uniform(-1.54, 1.54)
         ca, sa = math.cos(ang), math.sin(ang)
-        rad = r * rnd.uniform(0.2, 1.12)
-        nodes.append(f'<circle cx="{cx + ca*rad:.1f}" cy="{cy + sa*rad:.1f}" '
-                     f'r="{round(rnd.uniform(0.3, 1.1), 2)}" '
-                     f'fill="{rnd.choice(["#9dbcfb", "#4f86f7", "#ffffff", "#3b82f6"])}" '
-                     f'opacity="{round(rnd.uniform(0.2, 0.7), 2)}"/>')
+        rad = r * rnd.uniform(0.18, 1.08)
+        dust.append(f'<circle cx="{cx + ca*rad:.1f}" cy="{cy + sa*rad:.1f}" '
+                    f'r="{round(rnd.uniform(0.3, 1.0), 2)}" '
+                    f'fill="{rnd.choice(["#67e8f9", "#4f86f7", "#ffffff", "#38bdf8"])}" '
+                    f'opacity="{round(rnd.uniform(0.18, 0.6), 2)}"/>')
 
     return f"""<svg class="orb" viewBox="0 0 {VW} {VH}" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <radialGradient id="sph" cx="8%" cy="42%" r="94%">
-      <stop offset="0" stop-color="#eaf2ff"/><stop offset="13%" stop-color="#9dbcfb"/>
-      <stop offset="33%" stop-color="#4f86f7"/><stop offset="56%" stop-color="#1a56db"/>
-      <stop offset="80%" stop-color="#0c2f8f"/><stop offset="100%" stop-color="#08163a"/>
+    <radialGradient id="sph" cx="33%" cy="40%" r="82%">
+      <stop offset="0" stop-color="#9cc0ff"/><stop offset="20%" stop-color="#4f86f7"/>
+      <stop offset="44%" stop-color="#1f5be0"/><stop offset="70%" stop-color="#0e3aa8"/>
+      <stop offset="100%" stop-color="#08205c"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="rgba(40,110,240,.40)"/><stop offset="70%" stop-color="rgba(26,86,219,.12)"/>
+      <stop offset="100%" stop-color="rgba(26,86,219,0)"/>
     </radialGradient>
     <radialGradient id="core" cx="50%" cy="50%" r="50%">
-      <stop offset="0" stop-color="rgba(232,242,255,.95)"/><stop offset="100%" stop-color="rgba(120,170,255,0)"/>
+      <stop offset="0" stop-color="rgba(235,245,255,.95)"/><stop offset="100%" stop-color="rgba(120,180,255,0)"/>
     </radialGradient>
     <clipPath id="lh"><rect x="0" y="0" width="{cx}" height="{VH}"/></clipPath>
   </defs>
+  <circle cx="{cx}" cy="{cy}" r="{r*1.18:.0f}" fill="url(#halo)"/>
   <g clip-path="url(#lh)"><circle cx="{cx}" cy="{cy}" r="{r}" fill="url(#sph)"/></g>
-  <ellipse cx="{cx}" cy="{cy}" rx="55" ry="115" fill="url(#core)" opacity=".55"/>
   <g>{''.join(lines)}</g>
-  <g>{''.join(nodes)}</g>
+  <ellipse cx="{cx}" cy="{cy}" rx="48" ry="120" fill="url(#core)" opacity=".6"/>
+  <g>{''.join(tips)}</g>
+  <g>{''.join(dust)}</g>
 </svg>"""
 
 
