@@ -99,75 +99,81 @@ def legend(items):
 
 
 def gen_orb():
-    """Esfera Perpetual que estalla en particulas/rayos hacia la derecha.
-    Nucleo azul (#1a56db) que al explotar transiciona a naranja/amarillo
-    (brand-gradient azul->naranja). SVG inline, determinista."""
+    """Esfera Perpetual que se disuelve en particulas/rayos desde una costura
+    vertical en su borde derecho, abanicandose a la derecha (estilo referencia).
+    Predominante azul/blanco con chispas calidas sutiles. SVG determinista."""
     import random, math
-    rnd = random.Random(7)
-    ox, oy = 298, 282            # origen de la explosion (centro-derecha de la esfera)
-    sx, sy, sr = 205, 282, 196   # esfera
+    rnd = random.Random(11)
+    sx, sy, sr = 245, 280, 205            # esfera (centrada, completa)
+    fx, fy = sx + sr * 0.22, sy           # foco del abanico (dentro, lado derecho)
+    seam = sx + sr * 0.40                 # costura: aqui arranca la disolucion
 
     def orb_color(t):
-        if t < 0.34:
-            pool = ["#ffffff", "#ffffff", "#eaf2ff", "#9dbcfb", "#4f86f7"]
-        elif t < 0.68:
-            pool = ["#3b82f6", "#1a56db", "#ffffff", "#ffd9a0", "#f97316"]
+        if t < 0.45:
+            pool = ["#fff", "#fff", "#dbe7ff", "#9dbcfb", "#4f86f7", "#1a56db"]
+        elif t < 0.80:
+            pool = ["#1a56db", "#3b82f6", "#fff", "#9dbcfb", "#f97316"]
         else:
-            pool = ["#f97316", "#fbb900", "#ffd36b", "#ffffff"]
+            pool = ["#3b82f6", "#1a56db", "#fff", "#f97316", "#fbb900"]
         return rnd.choice(pool)
 
-    rays = []
-    for _ in range(320):
-        ang = math.radians(rnd.gauss(0, 47))
-        if rnd.random() < 0.12:
-            ang = math.radians(rnd.uniform(-125, 125))
-        ca, sa = math.cos(ang), math.sin(ang)
-        if ca < -0.12:
-            continue
-        start = rnd.uniform(65, 200)
-        length = rnd.uniform(16, 255) * (0.45 + 0.55 * max(0.0, ca))
-        end = start + length
-        x1, y1 = ox + ca * start, oy + sa * start
-        x2, y2 = ox + ca * end, oy + sa * end
-        t = min(1.0, end / 475.0)
-        w = round(rnd.uniform(0.4, 1.7), 2)
-        op = round(rnd.uniform(0.12, 0.82) * (1.0 - 0.35 * t), 2)
-        rays.append(f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" '
-                    f'stroke="{orb_color(t)}" stroke-width="{w}" opacity="{op}" stroke-linecap="round"/>')
+    def emit(n, kind):
+        out = []
+        for _ in range(n):
+            ang = rnd.gauss(0, 0.60)                   # abanico ~ +-34 grados
+            if rnd.random() < 0.10:
+                ang = rnd.gauss(0, 1.15)               # algunas mas abiertas
+            ca, sa = math.cos(ang), math.sin(ang)
+            if ca < 0.04:                              # solo hacia la derecha
+                continue
+            start = rnd.uniform(42, 100)               # arranca cerca de la costura
+            x1, y1 = fx + ca * start, fy + sa * start
+            t = min(1.0, (x1 - fx) / 285.0)
+            col = orb_color(t)
+            if kind == "ray":
+                length = rnd.uniform(14, 285) * (0.4 + 0.6 * ca)
+                x2, y2 = fx + ca * (start + length), fy + sa * (start + length)
+                t2 = min(1.0, (x2 - fx) / 300.0)
+                w = round(rnd.uniform(0.4, 1.8), 2)
+                op = round(rnd.uniform(0.14, 0.85) * (1.0 - 0.3 * t2), 2)
+                out.append(f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" '
+                           f'stroke="{orb_color(t2)}" stroke-width="{w}" opacity="{op}" stroke-linecap="round"/>')
+            else:
+                rad = rnd.uniform(start, start + rnd.uniform(20, 300) * ca)
+                x, y = fx + ca * rad, fy + sa * rad
+                td = min(1.0, (x - fx) / 300.0)
+                r = round(rnd.uniform(0.4, 2.1), 2)
+                op = round(rnd.uniform(0.22, 0.95) * (1.0 - 0.28 * td), 2)
+                out.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r}" fill="{orb_color(td)}" opacity="{op}"/>')
+        return "".join(out)
 
-    dots = []
-    for _ in range(440):
-        ang = math.radians(rnd.gauss(0, 56))
-        ca, sa = math.cos(ang), math.sin(ang)
-        if ca < -0.08:
-            continue
-        d = rnd.uniform(35, 445) * (0.4 + 0.6 * max(0.05, ca))
-        x, y = ox + ca * d, oy + sa * d
-        t = min(1.0, d / 445.0)
-        r = round(rnd.uniform(0.4, 2.0), 2)
-        op = round(rnd.uniform(0.2, 0.95) * (1.0 - 0.3 * t), 2)
-        dots.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r}" fill="{orb_color(t)}" opacity="{op}"/>')
-
+    rays, dots = emit(360, "ray"), emit(520, "dot")
+    fade = (fx - 30) / 560
+    fade2 = (seam + 25) / 560
     return f"""<svg class="orb" viewBox="0 0 560 560" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <radialGradient id="sph" cx="40%" cy="40%" r="62%">
+    <radialGradient id="sph" cx="38%" cy="40%" r="64%">
       <stop offset="0" stop-color="#eaf2ff"/><stop offset="16%" stop-color="#9dbcfb"/>
       <stop offset="42%" stop-color="#1a56db"/><stop offset="74%" stop-color="#0a2c8c"/>
       <stop offset="100%" stop-color="#06133f"/>
     </radialGradient>
     <radialGradient id="glow" cx="42%" cy="50%" r="60%">
-      <stop offset="0" stop-color="rgba(26,86,219,.55)"/><stop offset="100%" stop-color="rgba(26,86,219,0)"/>
+      <stop offset="0" stop-color="rgba(26,86,219,.5)"/><stop offset="100%" stop-color="rgba(26,86,219,0)"/>
+    </radialGradient>
+    <radialGradient id="seamg" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="rgba(220,231,255,.95)"/><stop offset="100%" stop-color="rgba(120,170,255,0)"/>
     </radialGradient>
     <linearGradient id="diss" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#fff"/><stop offset="0.5" stop-color="#fff"/>
-      <stop offset="0.82" stop-color="#000"/>
+      <stop offset="0" stop-color="#fff"/><stop offset="{fade:.3f}" stop-color="#fff"/>
+      <stop offset="{fade2:.3f}" stop-color="#000"/>
     </linearGradient>
     <mask id="dmask"><rect width="560" height="560" fill="url(#diss)"/></mask>
   </defs>
-  <ellipse cx="245" cy="282" rx="320" ry="270" fill="url(#glow)"/>
+  <ellipse cx="245" cy="280" rx="320" ry="275" fill="url(#glow)"/>
   <g mask="url(#dmask)"><circle cx="{sx}" cy="{sy}" r="{sr}" fill="url(#sph)"/></g>
-  <g>{''.join(rays)}</g>
-  <g>{''.join(dots)}</g>
+  <ellipse cx="{seam:.0f}" cy="{sy}" rx="34" ry="{sr*0.95:.0f}" fill="url(#seamg)" opacity=".55"/>
+  <g>{rays}</g>
+  <g>{dots}</g>
 </svg>"""
 
 
@@ -293,7 +299,7 @@ section{{padding:30px 40px}}
 
 /* hero */
 .hero{{background:var(--bg-dark);color:var(--on-dark);display:grid;grid-template-columns:1.1fr .9fr;
-  min-height:340px;position:relative;overflow:hidden}}
+  min-height:520px;position:relative;overflow:hidden}}
 .hero-l{{padding:42px 40px;display:flex;flex-direction:column;justify-content:center}}
 .hero .chip{{display:inline-flex;gap:8px;align-items:center;font-weight:800;font-size:15px;margin-bottom:26px}}
 .hero .chip b{{background:#fff;color:var(--bg-dark);padding:3px 9px;border-radius:4px}}
@@ -301,7 +307,7 @@ section{{padding:30px 40px}}
 .hero h1{{font-size:40px;margin:6px 0 0}}
 .hero .ed{{margin-top:30px;font-weight:600;font-size:12px;letter-spacing:.14em;color:var(--dim-dark);text-transform:uppercase}}
 .hero-r{{position:relative;overflow:hidden}}
-.orb{{position:absolute;right:-70px;top:50%;transform:translateY(-50%);width:540px;height:540px}}
+.orb{{position:absolute;right:-55px;top:50%;transform:translateY(-50%);width:500px;height:500px}}
 
 /* survey band */
 .survey{{display:grid;grid-template-columns:auto auto 1fr auto;gap:26px;background:var(--surface);align-items:start}}
