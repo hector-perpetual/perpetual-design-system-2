@@ -49,6 +49,12 @@ BORDER_DARK = "243047"
 TEXT_ON_DARK = "FFFFFF"
 TEXT_DIM_DARK = "9AA6BD"
 
+# Fondo oscuro de SECCIONES del deck (override de marca pedido para este deck:
+# el "oscuro" es el azul Perpetual #1a56db, no el casi-negro). Solo deck, no token.
+SECTION_DARK = "1A56DB"
+SECTION_DARK_DEEP = "123F9E"   # tinte mas oscuro para profundidad sobre el azul
+SECTION_DARK_DIM = "C7D7F5"    # texto secundario legible sobre azul
+
 OK = "059669"
 WARN = "D97706"
 ERROR = "DC2626"
@@ -505,16 +511,16 @@ def s06():
 # 07 — Break section (dark)
 # ===========================================================================
 def s07():
-    s = slide(BG_DARK)
-    hexagon(s, 5.45, 0.7, 2.45, fill=SURFACE_DARK)
-    hexagon(s, 6.25, 1.35, 0.85, fill=ACCENT)
+    s = slide(SECTION_DARK)
+    hexagon(s, 5.45, 0.7, 2.45, fill=SECTION_DARK_DEEP)
+    hexagon(s, 6.25, 1.35, 0.85, fill=BRAND_YELLOW)
     hexagon(s, 4.2, 5.3, 0.5, fill=ACCENT2)
-    hexagon(s, 8.7, 5.0, 0.4, fill=BRAND_YELLOW)
+    hexagon(s, 8.7, 5.0, 0.4, fill=TEXT_ON_DARK)
     text(s, 1.5, 3.5, 10.3, 1.2,
-         [("Seccion ", TEXT_ON_DARK, F_DISPLAY, 46), ("02", ACCENT, F_DISPLAY, 46)],
+         [("Seccion ", TEXT_ON_DARK, F_DISPLAY, 46), ("02", BRAND_YELLOW, F_DISPLAY, 46)],
          align=PP_ALIGN.CENTER)
     text(s, 1.5, 4.7, 10.3, 0.5, "Estrategia y posicionamiento", size=15,
-         color=TEXT_DIM_DARK, font=F_LIGHT, align=PP_ALIGN.CENTER)
+         color=SECTION_DARK_DIM, font=F_LIGHT, align=PP_ALIGN.CENTER)
     footer(s, dark=True, page=7)
 
 
