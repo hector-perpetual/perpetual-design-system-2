@@ -98,10 +98,104 @@ def legend(items):
         f'<div class="lg"><span class="dot" style="background:{c}"></span>{t}</div>' for t, c in items) + '</div>'
 
 
+def gen_orb():
+    """Esfera Perpetual que estalla en particulas/rayos hacia la derecha.
+    Nucleo azul (#1a56db) que al explotar transiciona a naranja/amarillo
+    (brand-gradient azul->naranja). SVG inline, determinista."""
+    import random, math
+    rnd = random.Random(7)
+    ox, oy = 298, 282            # origen de la explosion (centro-derecha de la esfera)
+    sx, sy, sr = 205, 282, 196   # esfera
+
+    def orb_color(t):
+        if t < 0.34:
+            pool = ["#ffffff", "#ffffff", "#eaf2ff", "#9dbcfb", "#4f86f7"]
+        elif t < 0.68:
+            pool = ["#3b82f6", "#1a56db", "#ffffff", "#ffd9a0", "#f97316"]
+        else:
+            pool = ["#f97316", "#fbb900", "#ffd36b", "#ffffff"]
+        return rnd.choice(pool)
+
+    rays = []
+    for _ in range(320):
+        ang = math.radians(rnd.gauss(0, 47))
+        if rnd.random() < 0.12:
+            ang = math.radians(rnd.uniform(-125, 125))
+        ca, sa = math.cos(ang), math.sin(ang)
+        if ca < -0.12:
+            continue
+        start = rnd.uniform(65, 200)
+        length = rnd.uniform(16, 255) * (0.45 + 0.55 * max(0.0, ca))
+        end = start + length
+        x1, y1 = ox + ca * start, oy + sa * start
+        x2, y2 = ox + ca * end, oy + sa * end
+        t = min(1.0, end / 475.0)
+        w = round(rnd.uniform(0.4, 1.7), 2)
+        op = round(rnd.uniform(0.12, 0.82) * (1.0 - 0.35 * t), 2)
+        rays.append(f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" '
+                    f'stroke="{orb_color(t)}" stroke-width="{w}" opacity="{op}" stroke-linecap="round"/>')
+
+    dots = []
+    for _ in range(440):
+        ang = math.radians(rnd.gauss(0, 56))
+        ca, sa = math.cos(ang), math.sin(ang)
+        if ca < -0.08:
+            continue
+        d = rnd.uniform(35, 445) * (0.4 + 0.6 * max(0.05, ca))
+        x, y = ox + ca * d, oy + sa * d
+        t = min(1.0, d / 445.0)
+        r = round(rnd.uniform(0.4, 2.0), 2)
+        op = round(rnd.uniform(0.2, 0.95) * (1.0 - 0.3 * t), 2)
+        dots.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r}" fill="{orb_color(t)}" opacity="{op}"/>')
+
+    return f"""<svg class="orb" viewBox="0 0 560 560" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="sph" cx="40%" cy="40%" r="62%">
+      <stop offset="0" stop-color="#eaf2ff"/><stop offset="16%" stop-color="#9dbcfb"/>
+      <stop offset="42%" stop-color="#1a56db"/><stop offset="74%" stop-color="#0a2c8c"/>
+      <stop offset="100%" stop-color="#06133f"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="42%" cy="50%" r="60%">
+      <stop offset="0" stop-color="rgba(26,86,219,.55)"/><stop offset="100%" stop-color="rgba(26,86,219,0)"/>
+    </radialGradient>
+    <linearGradient id="diss" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fff"/><stop offset="0.5" stop-color="#fff"/>
+      <stop offset="0.82" stop-color="#000"/>
+    </linearGradient>
+    <mask id="dmask"><rect width="560" height="560" fill="url(#diss)"/></mask>
+  </defs>
+  <ellipse cx="245" cy="282" rx="320" ry="270" fill="url(#glow)"/>
+  <g mask="url(#dmask)"><circle cx="{sx}" cy="{sy}" r="{sr}" fill="url(#sph)"/></g>
+  <g>{''.join(rays)}</g>
+  <g>{''.join(dots)}</g>
+</svg>"""
+
+
 # ---------------------------------------------------------------------------
 # Datos (placeholder realista Perpetual, es-LatAm)
 # ---------------------------------------------------------------------------
-BLUE_SHADES = ["#0b2a8f", "#1a56db", "#4f86f7", "#9dbcfb"]  # graduado para imperativos
+# Paleta de datos oficial (tokens.md): orden recomendado para series
+PAL = ["#1a56db", "#f97316", "#059669", "#fbb900", "#7e22ce", "#6b7280"]
+P_BLUE, P_ORANGE, P_GREEN, P_YELLOW, P_VIOLET, P_MUTED = PAL
+
+
+def donut_multi(segments, size, stroke, text_color="var(--text)", center_top="", center_bot=""):
+    import math
+    r = (size - stroke) / 2
+    circ = 2 * math.pi * r
+    rings, offset = [], 0.0
+    for val, col in segments:
+        dash = circ * val / 100
+        rings.append(
+            f'<circle cx="{size/2}" cy="{size/2}" r="{r}" fill="none" stroke="{col}" '
+            f'stroke-width="{stroke}" stroke-dasharray="{dash:.1f} {circ-dash:.1f}" '
+            f'stroke-dashoffset="{-offset:.1f}" transform="rotate(-90 {size/2} {size/2})"/>')
+        offset += dash
+    return (f'<div class="donut" style="width:{size}px;height:{size}px">'
+            f'<svg width="{size}" height="{size}" viewBox="0 0 {size} {size}">{"".join(rings)}</svg>'
+            f'<div class="donut-c" style="color:{text_color}"><div class="donut-n">{center_top}</div>'
+            f'<div class="donut-l">{center_bot}</div></div></div>')
+
 
 mercados = [("Peru", 1031), ("Mexico", 1015), ("Colombia", 1013), ("Brasil", 1012),
             ("Chile", 1010), ("Argentina", 1009), ("Espana", 1002), ("Otros", 543)]
@@ -109,11 +203,11 @@ mercados = [("Peru", 1031), ("Mexico", 1015), ("Colombia", 1013), ("Brasil", 101
 industria = [("Tecnologia", 23), ("Servicios financieros", 18), ("Retail", 14),
              ("Salud", 12), ("Manufactura", 10), ("Energia", 8), ("Sector publico", 8), ("Otros", 7)]
 
-ingresos = [("<5M", 23, BLUE_SHADES[2]), ("5-18M", 30, BLUE_SHADES[1]),
-            ("18-50M", 27, BLUE_SHADES[0]), (">50M", 20, "var(--muted)")]
+ingresos = [("<5M", 23, P_BLUE), ("5-18M", 30, P_ORANGE),
+            ("18-50M", 27, P_GREEN), (">50M", 20, P_MUTED)]
 
-edad = [("18-24", 12, BLUE_SHADES[3]), ("25-34", 27, BLUE_SHADES[2]),
-        ("35-44", 24, BLUE_SHADES[1]), ("45-54", 20, BLUE_SHADES[0]), ("55+", 17, "var(--muted)")]
+edad = [("18-24", 12, P_BLUE), ("25-34", 27, P_ORANGE),
+        ("35-44", 24, P_GREEN), ("45-54", 20, P_YELLOW), ("55+", 17, P_VIOLET)]
 
 confianza = [
     ("Optimismo", [52, 41, 35]),
@@ -140,7 +234,7 @@ mini3 = group_hbars("Coaching", "% de usuarios con acceso a coach",
 
 # confianza: horizontal multi-serie
 conf_rows = []
-sc = ["var(--accent)", "var(--accent-2b)", "var(--muted)"]
+sc = [P_BLUE, P_ORANGE, P_MUTED]
 for lbl, vals in confianza:
     segs = "".join(
         f'<div class="cb"><span class="cb-fill" style="width:{v*1.4}%;background:{sc[i]}"></span><span class="cb-v">{v}%</span></div>'
@@ -148,14 +242,16 @@ for lbl, vals in confianza:
     conf_rows.append(f'<div class="cbrow"><span class="cb-l">{lbl}</span><div class="cb-set">{segs}</div></div>')
 CONF = "".join(conf_rows)
 
-# tono claro (#9dbcfb) requiere texto oscuro para contraste AA
-IMP_TEXT = ["#fff", "#fff", "#fff", "#0b2a8f"]
+# imperativos con la paleta de datos (azul, naranja, verde, amarillo);
+# amarillo lleva texto oscuro para contraste AA
+IMP_COLORS = [P_BLUE, P_ORANGE, P_GREEN, P_YELLOW]
+IMP_TEXT = ["#fff", "#fff", "#fff", "#111827"]
 IMP = "".join(
-    f'<div class="imp" style="background:{BLUE_SHADES[i]};color:{IMP_TEXT[i]}"><div class="imp-n">{i+1}</div>'
+    f'<div class="imp" style="background:{IMP_COLORS[i]};color:{IMP_TEXT[i]}"><div class="imp-n">{i+1}</div>'
     f'<div class="imp-t">{t}</div><div class="imp-d">{d}</div></div>'
     for i, (t, d) in enumerate(imperativos))
 
-DONUT_ROLE = donut(34, 120, 22, "var(--accent)", "var(--surface-2)", "34%", "", "var(--text)")
+DONUT_ROLE = donut_multi([(34, P_BLUE), (33, P_ORANGE), (33, P_GREEN)], 120, 22)
 DONUT_36 = donut(36, 190, 26, "#ffffff", "rgba(255,255,255,.25)", "36%", "", "#fff")
 
 MERCADOS = hbars(mercados, 1031, "var(--accent)")
@@ -163,6 +259,7 @@ INDUSTRIA = "".join(
     f'<div class="ind"><span>{t}</span><b>{v}%</b></div>' for t, v in industria)
 EDAD = vstack("Edad", [(p, c) for _, p, c in edad])
 INGRESOS = vstack("Ingresos", [(p, c) for _, p, c in ingresos])
+ORB = gen_orb()
 
 # ---------------------------------------------------------------------------
 # HTML
@@ -203,14 +300,8 @@ section{{padding:30px 40px}}
 .hero .chip span{{opacity:.6}}
 .hero h1{{font-size:40px;margin:6px 0 0}}
 .hero .ed{{margin-top:30px;font-weight:600;font-size:12px;letter-spacing:.14em;color:var(--dim-dark);text-transform:uppercase}}
-.hero-r{{position:relative}}
-.orb{{position:absolute;right:-60px;top:50%;transform:translateY(-50%);width:430px;height:430px;border-radius:50%;
-  background:radial-gradient(circle at 38% 38%, #cde0ff 0%, var(--accent-2b) 16%, var(--accent) 40%, #0a2c8c 70%, #06155a 100%);
-  box-shadow:0 0 120px 20px rgba(26,86,219,.55);}}
-.orb::after{{content:"";position:absolute;inset:0;border-radius:50%;
-  background:radial-gradient(rgba(255,255,255,.85) .6px,transparent .7px);background-size:9px 9px;
-  mix-blend-mode:overlay;opacity:.5;-webkit-mask:radial-gradient(circle at 38% 38%,#000 55%,transparent 78%);
-          mask:radial-gradient(circle at 38% 38%,#000 55%,transparent 78%)}}
+.hero-r{{position:relative;overflow:hidden}}
+.orb{{position:absolute;right:-70px;top:50%;transform:translateY(-50%);width:540px;height:540px}}
 
 /* survey band */
 .survey{{display:grid;grid-template-columns:auto auto 1fr auto;gap:26px;background:var(--surface);align-items:start}}
@@ -282,11 +373,11 @@ section{{padding:30px 40px}}
   <div class="hero">
     <div class="hero-l">
       <div class="chip"><b>Perpetual X</b><span>|</span><b style="background:transparent;color:#fff;padding-left:0">Perpetual</b></div>
-      <div class="label" style="color:var(--accent-2b)">Perpetual · IA en el trabajo</div>
+      <div class="label" style="color:var(--accent2)">Perpetual · IA en el trabajo</div>
       <h1>El impulso crece,<br>pero quedan brechas.</h1>
       <div class="ed">Tercera edicion · Junio 2026</div>
     </div>
-    <div class="hero-r"><div class="orb"></div></div>
+    <div class="hero-r">{ORB}</div>
   </div>
 
   <section class="survey">
@@ -297,7 +388,7 @@ section{{padding:30px 40px}}
     <div>
       <div class="block-h">Rol</div>
       {DONUT_ROLE}
-      {legend([("Primera linea", "var(--accent)"), ("Gerentes", "var(--accent-2b)"), ("Lideres", "var(--surface-2)")])}
+      {legend([("Primera linea", P_BLUE), ("Gerentes", P_ORANGE), ("Lideres", P_GREEN)])}
     </div>
     <div>
       <div class="block-h">Mercados clave</div>
@@ -330,7 +421,7 @@ section{{padding:30px 40px}}
     <div>
       <h2>A medida que la IA se vuelve mainstream, la confianza sube y las preocupaciones bajan.</h2>
       <div class="leg"><span><span class="dot" style="background:var(--accent)"></span>2026</span>
-        <span><span class="dot" style="background:var(--accent-2b)"></span>2024</span>
+        <span><span class="dot" style="background:var(--accent2)"></span>2024</span>
         <span><span class="dot" style="background:var(--muted)"></span>2019</span></div>
     </div>
     <div>{CONF}</div>
