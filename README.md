@@ -10,6 +10,8 @@ Repo **único y canónico** de la marca Perpetual Technologies: tokens, tipograf
 | `dist/perpetual-design-system.skill` | Skill empaquetada, lista para instalar. |
 | `dist/perpetual-deck-template.pptx` | Template de presentación, 19 slides on-brand. |
 | `build.py` | Generador reproducible del deck (python-pptx). |
+| `report/perpetual-ai-at-work.html` | Reporte-infografía HTML autocontenido (estilo informe de consultoría) en marca Perpetual. Se abre en el navegador. |
+| `report/build_report.py` | Generador del reporte HTML (fuentes embebidas + logo inline). |
 
 ## Template de presentación (19 slides)
 
